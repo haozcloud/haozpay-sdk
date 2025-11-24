@@ -14,20 +14,27 @@ import (
 )
 
 // BuildSignString 构建签名字符串
+// 参数按字典序升序排列，如果参数值为空字符串则略过
+//
+// params: 参数Map
+// 返回: 签名字符串，格式为: key1=value1&key2=value2
 func BuildSignString(params map[string]interface{}) string {
 	if params == nil || len(params) == 0 {
 		return ""
 	}
 
+	// 提取key并排序（字典序）
 	keys := make([]string, 0, len(params))
 	for key := range params {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
 
+	// 构建签名字符串
 	var sb strings.Builder
 	for _, key := range keys {
 		value := params[key]
+		// 跳过sign字段和nil值以及空字符串
 		if key == "sign" || value == nil {
 			continue
 		}
@@ -42,6 +49,7 @@ func BuildSignString(params map[string]interface{}) string {
 		sb.WriteString("&")
 	}
 
+	// 删除最后一个&
 	result := sb.String()
 	if len(result) > 0 {
 		result = result[:len(result)-1]
@@ -51,26 +59,46 @@ func BuildSignString(params map[string]interface{}) string {
 }
 
 // GenerateSign 生成签名
+// 步骤：
+// 1. 构建签名字符串（字典序排序，空值跳过）
+// 2. SHA256摘要（转为HEX字符串）
+// 3. 使用私钥进行RSA"加密"操作（实际是私钥指数运算：m^d mod n）
+// 4. Base64编码
+//
+// 注意：Java Hutool的encryptBase64(data, KeyType.PrivateKey)使用私钥进行"加密"，
+// 实际是用私钥指数d进行模运算，然后可以用公钥验证
+//
+// params: 参数Map
+// privateKeyStr: 私钥字符串（支持纯私钥字符串或完整PEM格式）
 func GenerateSign(params map[string]interface{}, privateKeyStr string) (string, error) {
+	// 1. 构建签名字符串
 	signString := BuildSignString(params)
 
+	// 2. SHA256摘要，转为HEX字符串（小写）
 	hash := sha256.Sum256([]byte(signString))
 	sha256Hash := fmt.Sprintf("%x", hash)
 
+	// 3. 解析私钥
 	privateKey, err := parsePrivateKey(privateKeyStr)
 	if err != nil {
 		return "", fmt.Errorf("解析私钥失败: %w", err)
 	}
 
+	// 4. 使用私钥进行RSA"加密"（PKCS1v15填充 + 私钥指数运算）
+	// 这对应Java Hutool的encryptBase64(data, KeyType.PrivateKey)
 	signBytes, err := privateKeyEncryptRaw(privateKey, []byte(sha256Hash))
 	if err != nil {
 		return "", fmt.Errorf("RSA私钥加密失败: %w", err)
 	}
 
+	// 5. Base64编码
 	return base64.StdEncoding.EncodeToString(signBytes), nil
 }
 
 // privateKeyEncryptRaw 使用私钥进行"加密"（实际是签名操作）
+// Java Hutool 使用 RSA/ECB/PKCS1Padding，私钥加密时使用 block type 1
+// 1. PKCS1v15填充（block type 1，使用 0xFF 填充）
+// 2. 使用私钥指数d进行模运算：c = m^d mod n
 func privateKeyEncryptRaw(privateKey *rsa.PrivateKey, data []byte) ([]byte, error) {
 	k := privateKey.Size()
 
@@ -78,13 +106,15 @@ func privateKeyEncryptRaw(privateKey *rsa.PrivateKey, data []byte) ([]byte, erro
 		return nil, errors.New("数据过长，超过RSA限制")
 	}
 
+	// 构建PKCS1v15填充（签名模式）: 0x00 || 0x01 || PS || 0x00 || M
+	// PS是0xFF字节，长度 = k - 3 - len(data)，最少8字节
 	em := make([]byte, k)
 	em[0] = 0x00
-	em[1] = 0x01
+	em[1] = 0x01 // block type 1（签名模式，使用0xFF填充）
 
 	psLen := k - 3 - len(data)
-	for i := 2; i < 2+psLen; i++ {
-		em[i] = 0xFF
+	for i := 0; i < psLen; i++ {
+		em[2+i] = 0xFF
 	}
 
 	em[2+psLen] = 0x00
@@ -100,18 +130,24 @@ func privateKeyEncryptRaw(privateKey *rsa.PrivateKey, data []byte) ([]byte, erro
 	return encrypted, nil
 }
 
-// parsePrivateKey 解析私钥
+// parsePrivateKey 解析私钥（支持PKCS1和PKCS8格式，自动兼容纯私钥字符串和PEM格式）
 func parsePrivateKey(keyStr string) (*rsa.PrivateKey, error) {
+	// 去除首尾空白字符
 	keyStr = strings.TrimSpace(keyStr)
+
+	// 智能检测并补全PEM格式标志
 	keyStr = normalizePEMFormat(keyStr)
 
+	// 解析PEM格式
 	block, _ := pem.Decode([]byte(keyStr))
 	if block == nil {
 		return nil, errors.New("私钥PEM格式解析失败")
 	}
 
+	// 尝试PKCS1格式
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
+		// 尝试PKCS8格式
 		keyInterface, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
 			return nil, fmt.Errorf("不支持的私钥格式: %w", err)
@@ -126,29 +162,34 @@ func parsePrivateKey(keyStr string) (*rsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-// normalizePEMFormat 标准化PEM格式
+// normalizePEMFormat 标准化PEM格式，自动补全头尾标志
 func normalizePEMFormat(keyStr string) string {
 	keyStr = strings.TrimSpace(keyStr)
 
+	// 检查是否已经包含PEM格式标志
 	hasPKCS1Header := strings.Contains(keyStr, "-----BEGIN RSA PRIVATE KEY-----")
 	hasPKCS8Header := strings.Contains(keyStr, "-----BEGIN PRIVATE KEY-----")
 	hasPKCS1Footer := strings.Contains(keyStr, "-----END RSA PRIVATE KEY-----")
 	hasPKCS8Footer := strings.Contains(keyStr, "-----END PRIVATE KEY-----")
 
+	// 如果已经是完整的PEM格式，直接返回
 	if (hasPKCS1Header && hasPKCS1Footer) || (hasPKCS8Header && hasPKCS8Footer) {
 		return keyStr
 	}
 
+	// 如果只有头部或尾部，先移除它们
 	keyStr = strings.ReplaceAll(keyStr, "-----BEGIN RSA PRIVATE KEY-----", "")
 	keyStr = strings.ReplaceAll(keyStr, "-----END RSA PRIVATE KEY-----", "")
 	keyStr = strings.ReplaceAll(keyStr, "-----BEGIN PRIVATE KEY-----", "")
 	keyStr = strings.ReplaceAll(keyStr, "-----END PRIVATE KEY-----", "")
 	keyStr = strings.TrimSpace(keyStr)
 
+	// 移除可能存在的换行符，然后重新格式化（每64个字符一行）
 	keyStr = strings.ReplaceAll(keyStr, "\n", "")
 	keyStr = strings.ReplaceAll(keyStr, "\r", "")
 	keyStr = strings.ReplaceAll(keyStr, " ", "")
 
+	// 每64个字符插入换行符（PEM标准格式）
 	var formatted strings.Builder
 	for i := 0; i < len(keyStr); i += 64 {
 		end := i + 64
@@ -159,5 +200,6 @@ func normalizePEMFormat(keyStr string) string {
 		formatted.WriteString("\n")
 	}
 
+	// 默认使用PKCS1格式头尾（兼容性更好）
 	return "-----BEGIN RSA PRIVATE KEY-----\n" + formatted.String() + "-----END RSA PRIVATE KEY-----"
 }
