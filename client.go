@@ -1,4 +1,4 @@
-package sdk
+package haozpay
 
 import (
 	"github.com/go-resty/resty/v2"
