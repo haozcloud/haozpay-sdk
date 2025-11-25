@@ -1,4 +1,4 @@
-module github.com/WeiZzz-D/haozpay-sdk
+module codeup.aliyun.com/68c7e8dcccf3499544d820c6/pay/backend/pay-go-sdk
 
 go 1.23
 
