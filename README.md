@@ -1,7 +1,5 @@
 # haozPay SDK for Go
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/WeiZzz-D/haozpay-sdk)](https://goreportcard.com/report/github.com/WeiZzz-D/haozpay-sdk)
-[![GoDoc](https://godoc.org/github.com/WeiZzz-D/haozpay-sdk?status.svg)](https://godoc.org/github.com/WeiZzz-D/haozpay-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 皓臻支付 Go SDK，提供简洁易用的接口集成皓臻支付平台服务。
@@ -10,7 +8,7 @@
 
 - 🔐 **安全可靠**: RSA SHA256WithRSA 签名算法，确保请求安全
 - 🚀 **简单易用**: 链式配置，简洁的 API 设计
-- 📦 **功能完整**: 支持统一下单、订单取消、退款、退款查询、账户提现
+- 📦 **功能完整**: 支持统一下单、订单取消、退款、退款查询
 - 🛠 **生产就绪**: 内置重试机制、超时控制、调试模式
 - 📝 **文档完善**: 详细的代码注释和使用示例
 
@@ -22,12 +20,11 @@
 | 订单取消 | `CancelOrder` | 取消未支付订单 |
 | 退款 | `CreateRefund` | 发起退款请求 |
 | 退款查询 | `QueryRefund` | 查询退款状态 |
-| 账户提现 | `CreateWithdraw` | 商户账户提现 |
 
 ## 📦 安装
 
 ```bash
-go get github.com/WeiZzz-D/haozpay-sdk
+go get codeup.aliyun.com/68c7e8dcccf3499544d820c6/pay/backend/pay-go-sdk
 ```
 
 ## 🚀 快速开始
@@ -41,7 +38,7 @@ import (
     "context"
     "log"
     
-    haozpay "github.com/WeiZzz-D/haozpay-sdk"
+    haozpay "codeup.aliyun.com/68c7e8dcccf3499544d820c6/pay/backend/pay-go-sdk"
 )
 
 func main() {
@@ -137,25 +134,6 @@ log.Printf("退款状态: %s (代码: %d)",
     refundStatus.RefundStatus)
 ```
 
-### 6. 账户提现
-
-```go
-withdrawReq := &haozpay.CreateWithdrawRequest{
-    PayChannel:     "HFDG",
-    WithdrawAmount: 100.00,
-    ReqSeqId:       "TX20251116001",
-    Remark:         "商户提现",
-    NotifyUrl:      "https://yourdomain.com/withdraw-callback",
-}
-
-err := client.Payment.CreateWithdraw(ctx, withdrawReq)
-if err != nil {
-    log.Fatal(err)
-}
-
-log.Println("提现申请成功")
-```
-
 ## 🔐 密钥配置
 
 ### 生成 RSA 密钥对
@@ -229,7 +207,7 @@ if err != nil {
 
 ## 📖 API 文档
 
-完整的 API 文档请访问: [GoDoc](https://godoc.org/github.com/WeiZzz-D/haozpay-sdk)
+完整的 API 文档请查看源码注释。
 
 ## 🤝 贡献
 
@@ -243,7 +221,6 @@ if err != nil {
 
 - [皓臻支付官网](https://gate.haozpay.com)
 - [皓臻支付文档](https://gate.haozpay.com/docs)
-- [问题反馈](https://github.com/WeiZzz-D/haozpay-sdk/issues)
 
 ## ⚠️ 注意事项
 
@@ -254,4 +231,4 @@ if err != nil {
 
 ## 📮 联系方式
 
-如有问题，请提交 [Issue](https://github.com/WeiZzz-D/haozpay-sdk/issues)。
+如有问题，请联系技术支持。
