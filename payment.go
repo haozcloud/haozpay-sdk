@@ -170,41 +170,6 @@ func (s *PaymentService) QueryRefund(ctx context.Context, req *QueryRefundReques
 	return result.Data, nil
 }
 
-func (s *PaymentService) CreateWithdraw(ctx context.Context, req *CreateWithdrawRequest) error {
-	bizBodyBytes, err := json.Marshal(req)
-	if err != nil {
-		return fmt.Errorf("failed to marshal bizBody: %w", err)
-	}
-
-	haozReq := &HaozPayRequest{
-		MerchantNo: s.config.MerchantNo,
-		Timestamp:  currentTimestampMillis(),
-		BizBody:    string(bizBodyBytes),
-	}
-
-	var result Response
-
-	_, err = s.client.R().
-		SetContext(ctx).
-		SetBody(haozReq).
-		SetResult(&result).
-		Post("/pay-core/account/withdraw")
-
-	if err != nil {
-		return fmt.Errorf("failed to create withdraw: %w", err)
-	}
-
-	if result.Code != 0 {
-		return NewSDKError(
-			result.Code,
-			result.Message,
-			0,
-		)
-	}
-
-	return nil
-}
-
 func currentTimestampMillis() int64 {
 	return time.Now().UnixMilli()
 }
