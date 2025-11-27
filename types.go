@@ -18,11 +18,11 @@ type HaozPayRequest struct {
 }
 
 type CreatePaymentOrderRequest struct {
-	OrderTitle         string  `json:"orderTitle"`
-	OrderAmount        float64 `json:"orderAmount"`
-	PayType            int     `json:"payType"`
-	UseHaozPayCashier  bool    `json:"useHaozPayCashier"`
-	NotifyUrl          string  `json:"notifyUrl"`
+	OrderTitle        string  `json:"orderTitle"`
+	OrderAmount       float64 `json:"orderAmount"`
+	PayType           int     `json:"payType"`
+	UseHaozPayCashier bool    `json:"useHaozPayCashier"`
+	NotifyUrl         string  `json:"notifyUrl"`
 }
 
 type PaymentOrderResponse struct {
@@ -42,7 +42,7 @@ type CancelPaymentOrderRequest struct {
 }
 
 type CreateRefundRequest struct {
-	OrderNo      string  `json:"orderNo"`
+	ReqSeqId     string  `json:"reqSeqId"`
 	RefundAmount float64 `json:"refundAmount"`
 	RefundReason string  `json:"refundReason,omitempty"`
 	Remark       string  `json:"remark,omitempty"`
@@ -69,27 +69,26 @@ type RefundResponse struct {
 }
 
 type QueryRefundRequest struct {
-	OrderNo     string `json:"orderNo"`
-	RefundSeqId string `json:"refundSeqId,omitempty"`
+	OrderNo string `json:"orderNo"`
 }
 
 type QueryRefundResponse struct {
-	MerchantNo          string  `json:"merchantNo"`
-	OrderNo             string  `json:"orderNo"`
-	RefundSeqId         string  `json:"refundSeqId"`
-	PaySeqId            string  `json:"paySeqId"`
-	PayReqDate          string  `json:"payReqDate"`
-	RefundAmount        float64 `json:"refundAmount"`
-	ActualRefundAmount  float64 `json:"actualRefundAmount"`
-	RefundStatus        int     `json:"refundStatus"`
-	RefundStatusDesc    string  `json:"refundStatusDesc"`
-	TransFinishTime     string  `json:"transFinishTime"`
-	FeeAmount           float64 `json:"feeAmount"`
-	AcctSplitBunch      string  `json:"acctSplitBunch"`
-	UnconfirmAmount     float64 `json:"unconfirmAmount"`
-	ConfirmedAmount     float64 `json:"confirmedAmount"`
-	PayChannel          string  `json:"payChannel"`
-	Remark              string  `json:"remark"`
+	MerchantNo         string  `json:"merchantNo"`
+	OrderNo            string  `json:"orderNo"`
+	RefundSeqId        string  `json:"refundSeqId"`
+	PaySeqId           string  `json:"paySeqId"`
+	PayReqDate         string  `json:"payReqDate"`
+	RefundAmount       float64 `json:"refundAmount"`
+	ActualRefundAmount float64 `json:"actualRefundAmount"`
+	RefundStatus       int     `json:"refundStatus"`
+	RefundStatusDesc   string  `json:"refundStatusDesc"`
+	TransFinishTime    string  `json:"transFinishTime"`
+	FeeAmount          float64 `json:"feeAmount"`
+	AcctSplitBunch     string  `json:"acctSplitBunch"`
+	UnconfirmAmount    float64 `json:"unconfirmAmount"`
+	ConfirmedAmount    float64 `json:"confirmedAmount"`
+	PayChannel         string  `json:"payChannel"`
+	Remark             string  `json:"remark"`
 }
 
 type CreateWithdrawRequest struct {
