@@ -23,8 +23,22 @@
 
 ## 📦 安装
 
+### 使用 go get 安装
+
 ```bash
-go get github.com/haozcloud/haozpay-sdk
+go get github.com/haozcloud/haozpay-sdk@v0.0.3
+```
+
+### 或在 go.mod 中添加依赖
+
+```go
+require github.com/haozcloud/haozpay-sdk v0.0.3
+```
+
+然后执行：
+
+```bash
+go mod tidy
 ```
 
 ## 🚀 快速开始
@@ -135,19 +149,6 @@ log.Printf("退款状态: %s (代码: %d)",
 
 ## 🔐 密钥配置
 
-### 生成 RSA 密钥对
-
-```bash
-# 1. 生成 RSA 私钥 (PKCS#1 格式)
-openssl genrsa -out rsa_private_key.pem 2048
-
-# 2. 生成 RSA 公钥
-openssl rsa -in rsa_private_key.pem -pubout -out rsa_public_key.pem
-
-# 3. 转换为 PKCS#8 格式 (推荐)
-openssl pkcs8 -topk8 -in rsa_private_key.pem -out pkcs8_private_key.pem -nocrypt
-```
-
 ### 配置密钥
 
 1. **商户私钥**: 将生成的私钥通过 `WithPrivateKey()` 配置，用于请求签名
@@ -218,7 +219,6 @@ if err != nil {
 
 ## 🔗 相关链接
 
-- [皓臻支付官网](https://gate.haozpay.com)
 - [皓臻支付文档](https://gate.haozpay.com/docs)
 - [GitHub 仓库](https://github.com/haozcloud/haozpay-sdk)
 - [问题反馈](https://github.com/haozcloud/haozpay-sdk/issues)
